@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Document</title>
+    </head>
+    <body>
+        <div id="app">
+            <div v-for="(item, index) in $store.state.list" :key="index">
+                {{ item }}
+            </div>
+            length {{ $store.getters.list2 }}
+        </div>
+        <script type="text/javascript" src="https://unpkg.com/vue"></script>
+        <script src="./lib/store.js"></script>
+        <script>
+            let store = new Store({
+                state: {
+                    list: [1, 2, 3, 4]
+                },
+                getters: {
+                    list(state) {
+                        console.log(state);
+                        return state.list.length;
+                    },
+                    list2(state, getters) {
+                        return ': ' + getters.list;
+                    }
+                }
+            });
+
+            new Vue({
+                el: '#app',
+                store,
+                created() {
+                    setTimeout(() => {
+                        this.$store.state.list.push(5);
+                    }, 3000);
+                }
+            });
+        </script>
+    </body>
+</html>
