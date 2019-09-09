@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Document</title>
+    </head>
+    <body>
+        <p>actions</p>
+        <div id="app">
+            <div v-for="(item, index) in $store.state.list" :key="index">
+                {{ item }}
+            </div>
+        </div>
+        <script type="text/javascript" src="https://unpkg.com/vue"></script>
+        <script src="./lib/store.js"></script>
+        <script>
+            let store = new Store({
+                state: {
+                    list: []
+                },
+                mutations: {
+                    setList(state, payload) {
+                        state.list = payload;
+                    }
+                },
+                actions: {
+                    setList({ commit }, payload) {
+                        commit('setList', payload);
+                    }
+                }
+            });
+            new Vue({
+                el: '#app',
+                store,
+                created() {
+                    this.$store.dispatch('setList', [1, 2, 3, 4, 5]);
+                }
+            });
+        </script>
+    </body>
+</html>

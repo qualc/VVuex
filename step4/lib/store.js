@@ -8,11 +8,17 @@ class Store {
         this._wrappedGetters = Object.create(null);
         // mutation对象
         this._mutations = Object.create(null);
+        // actions对象
+        this._actions = Object.create(null);
 
         // 注册 getters
         registerGetters(this, options);
         // 注册 mutations
         registerMutations(this, options);
+        // 注册 mutations
+        registerMutations(this, options);
+        // 注册 actions
+        registerActions(this, options);
 
         // 注册Store
         resetStoreVM(this, state);
@@ -33,6 +39,18 @@ class Store {
             mutationHandler(payload);
         });
     }
+    dispatch(type, payload) {
+        if (!type) return;
+        // 根据key找到对应的handler集合
+        let actions = this._actions[type];
+        // 遍历集合并执行hander,和mutations不同的是,actions是一个promise数组
+        return Promise.all(actions.map(handler => handler(payload))).then(
+            res => {
+                // 如果只有一个handler,直接返回第一个promise对象
+                return res.length > 1 ? res : res[0];
+            }
+        );
+    }
 }
 function registerGetters(store, options) {
     // 遍历 options 上的 getters 属性
@@ -51,6 +69,37 @@ function registerMutations(store, options) {
         // 将当前handler存入store._mutations中
         mutation.push(function wrappedMutations(payload) {
             options.mutations[key].call(store, store.state, payload);
+        });
+    });
+}
+function registerActions(store, options) {
+    // 遍历 options 上的 mutations 属性
+    Object.keys(options.actions || {}).forEach(key => {
+        let mutation = store._actions[key] || (store._actions[key] = []);
+        // 将当前handler存入store._actions中,返回的是promise对象
+        mutation.push(function wrappedMutations(payload, cb) {
+            // 调用并传入 dispatch commit getters state四个属性
+            let res = options.actions[key].call(
+                store,
+                {
+                    dispatch: function(type, payload) {
+                        // 为了保证执行dispatch时的作用域
+                        store.dispatch(type, payload);
+                    },
+                    commit: function(type, payload) {
+                        // 同理
+                        store.commit(type, payload);
+                    },
+                    getters: store.getters,
+                    state: store.state
+                },
+                payload
+            );
+            // 如果返回的不是一个promise对象,就转换为一个promise对象
+            if (!(res && typeof val.then === 'function')) {
+                res = Promise.resolve(res);
+            }
+            return res;
         });
     });
 }

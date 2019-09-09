@@ -1,11 +1,11 @@
 # step3 实现 mutations 调用
 
-`mutations`是同步修改 `store` 状态的函数,每个 `mutation` 都有一个字符串的 事件类型 (type) 和 一个 回调函数 (handler)。这个回调函数就是我们实际进行状态更改的地方，并且它会接受 state 作为第一个参数,入参为第二个可选参数`payload`,通过`this.$store.commit(type)`触发调用
-原理很简单,实例化的时候通过`type`将`handler`存在`_mutations`属性中,`commit`时直接搜索`_mutations[key]`调用
+> `mutations`是同步修改 `store` 状态的函数,每个 `mutation` 都有一个字符串的 事件类型 (type) 和 一个 回调函数 (handler)。这个回调函数就是我们实际进行状态更改的地方，并且它会接受 state 作为第一个参数,入参为第二个可选参数`payload`,通过`this.$store.commit(type)`触发调用
+> 原理很简单,实例化的时候通过`type`将`handler`存在`_mutations`属性中,`commit`时直接搜索`_mutations[key]`调用
 
 ## 创建 registerMutations 函数
 
-用于注册 `getters` 对象
+用于注册 `mutations` 对象
 
 ```js
 // 传入 optiosn  和 store
@@ -27,6 +27,9 @@ function registerMutations(store, options) {
 class Store {
     constructor(options = { state: {} }) {
         // ...
+
+        // mutation对象
+        this._mutations = Object.create(null);
 
         // 注册 mutations
         registerMutations(this, options);
@@ -52,6 +55,7 @@ class Store {
 ## 调用
 
 ```html
+<p>mutations</p>
 <div id="app">
     <div v-for="(item, index) in $store.state.list" :key="index">
         {{ item }}

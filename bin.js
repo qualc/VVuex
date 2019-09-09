@@ -38,7 +38,6 @@ ${menu
     .join('\n')}
 `;
     navContent = baseContent + navContent;
-    console.log(navContent);
     fs.writeFileSync('./README.md', navContent);
 }
 
