@@ -6,14 +6,6 @@
 
 [Github](https://github.com/qualc/VVuex)
 
-## 全站导航
-
-[step1 实现 state 调用](./step1/README.md)
-[step2 实现 getters 调用](./step2/README.md)
-[step3 实现 mutations 调用](./step3/README.md)
-[step4 实现 actions 调用](./step4/README.md)
-[step4 实现 modules 调用](./step5/README.md)
-
 ## step1 实现 state 调用
 
 > `state` 在 vuex 内部其实就是 vue 的 data 属性,通过 vue 数据劫持特性来监控 `state`的状态

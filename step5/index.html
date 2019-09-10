@@ -9,7 +9,7 @@
     <body>
         <p>modules noNamespace</p>
         <div id="app">
-            <div v-for="(item, index) in $store.state.list" :key="index">
+            <div v-for="(item, index) in $store.state.user.list" :key="index">
                 {{ item }}
             </div>
         </div>
@@ -20,13 +20,18 @@
             let store = new Store({
                 modules: {
                     user: {
+                        namespaced: true,
                         state: {
                             list: []
                         },
                         mutations: {
                             setList(state, paylod) {
-                                console.log(state);
                                 state.list = paylod;
+                            }
+                        },
+                        actions: {
+                            setList({ commit }, paylod) {
+                                commit('setList', paylod);
                             }
                         }
                     }
@@ -36,7 +41,8 @@
                 el: '#app',
                 store,
                 created() {
-                    this.$store.commit('setList', [1, 2, 3, 4]);
+                    console.log(this.$store);
+                    this.$store.dispatch('user/setList', [1, 2, 3, 4]);
                 }
             });
         </script>

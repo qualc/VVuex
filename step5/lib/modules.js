@@ -11,6 +11,12 @@ class ModuleItem {
     addChild(key, moduleItem) {
         this._children[key] = moduleItem;
     }
+    getChild(key) {
+        return this._children[key];
+    }
+    get namespaced() {
+        return !!this._rawModule.namespaced;
+    }
 }
 
 class Modules {
@@ -41,5 +47,13 @@ class Modules {
         // 这行代码的大概意思就是从root对象中,循环获取指定的key的属性
         // ['a', 'b'].reduce( (module, key) => module[key], {a: {b: 123} }); 执行一下试试
         return path.reduce((module, key) => module.getChild(key), this.root);
+    }
+    getNamespace(path) {
+        // 这里呢 是通过reduce遍历path,获取到每个子model的namespace
+        let module = this.root;
+        return path.reduce((namespace, key) => {
+            module = module.getChild(key);
+            return namespace + (module.namespaced ? key + '/' : '');
+        }, '');
     }
 }

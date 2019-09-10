@@ -238,3 +238,141 @@ function registerMutations(store, rawModules) {
 ![2019-09-09-18-44-31.png](http://static.qualc.cn/images/upload_6dcf662e618e3dc7a01e728cdbf74541.png)
 
 ## step4-3 为 modules 增加命名空间
+
+这里改动比较大,先说说命名空间,个人理解就是加了`层`的概念,module 里面有子 module,访问子 module 需要一个 key,一个层一个 key,多层多个 key,组成了代码中常见的 path,类似下面这样得
+
+```js
+let obj = {
+    root: {
+        child1: {
+            subChild1: {
+                state: { a: 1 }
+            },
+            subChild2: {
+                state: { a: 2 }
+            }
+        },
+        child2: { a: 3 }
+    }
+};
+// subChild1 的 path 路径是 root、child1,组成数组就是  ['root', 'child1', 'subChild1'];
+
+['child1', 'subChild1'].reduce((module, key) => module[key], obj.root);
+// 得到的是{ state: { a: 1 } }
+```
+
+### 创建 makeLocalContext
+
+`makeLocalContext`是用来`当前`module 的`作用域`的工具函数,会返回对应的层级的`state`、`getters`、`mutations`和`actions`四个属性
+
+```js
+function makeLocalContext(store, namespace, path) {
+    const noNamespace = namespace === '';
+    /*
+        定义一个对象，存储commit 和 dispatch 方法
+        commit 和 dispatch 是通知 mutations 和 actions 的接口
+        而命名空间下的 mutations 和 actions 是直接被解析在根目录的,例:
+        {
+            mudules:{
+                user:{
+                    namespaced: true,
+                    mutaions:{
+                        'setList': function(){}
+                    }
+                }
+            }
+        }
+        执行后会变为
+        {
+            stats:{...},
+            mutaions:{
+                'user/setList': [f]
+            }
+        }
+        所以 commit 通知的type直接拼接 namespace就可以了
+    */
+    let local = {
+        commit: noNamespace
+            ? store.commit
+            : (type, payload) => {
+                  type = namespace + type;
+                  return store.commit(type, payload);
+              },
+        dispatch: noNamespace
+            ? store.dispatch
+            : (type, payload) => {
+                  type = namespace + type;
+                  return store.dispatch(type, payload);
+              }
+    };
+    // 挂载  getters 和 state 到 local 上
+    Object.defineProperties(local, {
+        // getters 和上面解析后的结构是一样的,不同的点在于他需要筛选一哈
+        getters: {
+            get: noNamespace
+                ? () => store.getters
+                : () => makeLocalGetters(store, namespace)
+        },
+        state: {
+            get: () => getNestedState(store.state, path)
+        }
+    });
+    return local;
+}
+function makeLocalGetters(store, namespace) {
+    const gettersProxy = {};
+    // 筛选出符合当前 namespace 的getters
+    Object.keys(store.getters).forEach(type => {
+        Object.defineProperty(gettersProxy, localType, {
+            get: () => store.getters[type],
+            enumerable: true
+        });
+    });
+
+    return gettersProxy;
+}
+// 获取path对象的state对象
+function getNestedState(state, path) {
+    return path.length ? path.reduce((state, key) => state[key], state) : state;
+}
+```
+
+### 修改 registerXXX 函数
+
+```js
+function installModules(store, rootState, path, rawModules) {
+    // 获取到 namespace
+    let namespace = store._modules.getNamespace(path);
+
+    // 拿到local
+    const local = makeLocalContext(store, namespace, path);
+
+    // 注册 getters
+    registerGetters(store, rawModules, namespace, local);
+    // 注册 ...
+}
+```
+
+以 `registerGetters` 为例
+
+```js
+function registerGetters(store, rawModules, namespace, local) {
+    // 遍历 rawModules 上的 getters 属性
+    let getters = rawModules._rawModule.getters || {};
+    Object.keys(getters).forEach(key => {
+        // 拼接key
+        let namespacedType = namespace + key;
+        // 存储一个函数于_wrappedGetters[key]上，执行时实时传递传入 state 对象和 getters对象
+        store._wrappedGetters[namespacedType] = function wrappedGetter(store) {
+            // 执行 getters, 传递 state 和 getters 假装有个删除线
+            // 执行 getters, 传递 local.state、local.getters 和 根 state、getters
+            return getters[key](
+                local.state,
+                local.getters,
+                store.state,
+                store.getters
+            );
+        };
+    });
+}
+```
