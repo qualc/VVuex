@@ -7,7 +7,7 @@
         <title>Document</title>
     </head>
     <body>
-        <p>modules noNamespace</p>
+        <p>modules namespace</p>
         <div id="app">
             <div v-for="(item, index) in $store.state.user.list" :key="index">
                 {{ item }}
@@ -23,6 +23,11 @@
                         namespaced: true,
                         state: {
                             list: []
+                        },
+                        getters: {
+                            getLenth(state) {
+                                return state.list.length;
+                            }
                         },
                         mutations: {
                             setList(state, paylod) {
@@ -41,7 +46,7 @@
                 el: '#app',
                 store,
                 created() {
-                    console.log(this.$store);
+                    console.log(this.$store.getters);
                     this.$store.dispatch('user/setList', [1, 2, 3, 4]);
                 }
             });

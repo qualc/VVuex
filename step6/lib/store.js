@@ -12,6 +12,16 @@ class Store {
         this._actions = Object.create(null);
         // modules对象
         this._modules = new Modules(options);
+        this._modulesNamespaceMap = Object.create(null);
+
+        // 介里如果没有的话  在 mapMutations 和 mapActions 时会找不到this
+        let { commit, dispatch } = this;
+        this.commit = function boundCommit(type, payload) {
+            return commit.call(store, type, payload);
+        };
+        this.dispatch = function boundDispatch(type, payload) {
+            return dispatch.call(store, type, payload);
+        };
 
         // // 注册 getters
         // registerGetters(this, options);
@@ -149,7 +159,9 @@ function registerModules(store, rootState, path, rawModules) {
 function installModules(store, rootState, path, rawModules) {
     // 获取到 namespace
     let namespace = store._modules.getNamespace(path);
-
+    if (rawModules.namespaced) {
+        store._modulesNamespaceMap[namespace] = rawModules;
+    }
     // 不是根 state,就将rawModules挂载到state上去
 
     if (path.length) {
@@ -157,7 +169,11 @@ function installModules(store, rootState, path, rawModules) {
         // 这个不懂阔以看vue api  https://cn.vuejs.org/v2/api/#Vue-set
         Vue.set(parentState, path.slice(-1), rawModules.state);
     }
-    const local = makeLocalContext(store, namespace, path);
+    const local = (rawModules.context = makeLocalContext(
+        store,
+        namespace,
+        path
+    ));
 
     // 注册 getters
     registerGetters(store, rawModules, namespace, local);

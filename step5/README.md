@@ -1,4 +1,4 @@
-# step4 实现 modules 调用
+# step5 实现 modules 调用
 
 > `modules`相当于是子模块了,通过将 store 分割成多个子模块之后更方便的操作 store,因为当所有的数据都集中在一个对象上时 store 会变的相当复杂和臃肿
 
@@ -196,42 +196,31 @@ function registerMutations(store, rawModules) {
 
 ### 第二次调用
 
-```html
-<p>modules noNamespace</p>
-<div id="app">
-    <div v-for="(item, index) in $store.state.list" :key="index">
-        {{ item }}
-    </div>
-</div>
-<script type="text/javascript" src="https://unpkg.com/vue"></script>
-<script src="./lib/modules.js"></script>
-<script src="./lib/store.js"></script>
-<script>
-    let store = new Store({
-        modules: {
-            // 没有命名空间
-            user: {
-                state: {
-                    list: []
-                },
-                mutations: {
-                    setList(state, paylod) {
-                        console.log(state);
-                        state.list = paylod;
-                    }
+```js
+let store = new Store({
+    modules: {
+        // 没有命名空间
+        user: {
+            state: {
+                list: []
+            },
+            mutations: {
+                setList(state, paylod) {
+                    console.log(state);
+                    state.list = paylod;
                 }
             }
         }
-    });
-    new Vue({
-        el: '#app',
-        store,
-        created() {
-            // 没有命名空间, 所以直接调用
-            this.$store.commit('setList', [1, 2, 3, 4]);
-        }
-    });
-</script>
+    }
+});
+new Vue({
+    el: '#app',
+    store,
+    created() {
+        // 没有命名空间, 所以直接调用
+        this.$store.commit('setList', [1, 2, 3, 4]);
+    }
+});
 ```
 
 效果图如下：
@@ -376,3 +365,38 @@ function registerGetters(store, rawModules, namespace, local) {
     });
 }
 ```
+
+### 第三次调用
+
+```js
+let store = new Store({
+    modules: {
+        user: {
+            namespaced: true,
+            state: {
+                list: []
+            },
+            mutations: {
+                setList(state, paylod) {
+                    state.list = paylod;
+                }
+            },
+            actions: {
+                setList({ commit }, paylod) {
+                    commit('setList', paylod);
+                }
+            }
+        }
+    }
+});
+new Vue({
+    el: '#app',
+    store,
+    created() {
+        this.$store.dispatch('user/setList', [1, 2, 3, 4]);
+    }
+});
+```
+
+效果图如下：
+![2019-09-10-18-24-13.png](http://static.qualc.cn/images/upload_ef366c18c943c1360f2997070337ed62.png)

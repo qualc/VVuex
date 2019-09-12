@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Document</title>
+    </head>
+    <body>
+        <p>mapState</p>
+        <div id="app">
+            <div v-for="(item, index) in list" :key="index">
+                {{ item }}
+            </div>
+            <p>modulesLength: {{ modulesLength }}</p>
+        </div>
+        <script type="text/javascript" src="https://unpkg.com/vue"></script>
+        <script src="./lib/modules.js"></script>
+        <script src="./lib/helper.js"></script>
+        <script src="./lib/store.js"></script>
+        <script>
+            let store = new Store({
+                state: {
+                    modulesLength: 0
+                },
+                mutations: {
+                    setModulesLength(state, number) {
+                        state.modulesLength = number;
+                    }
+                },
+                modules: {
+                    user: {
+                        namespaced: true,
+                        state: {
+                            list: []
+                        },
+                        mutations: {
+                            setList(state, list) {
+                                state.list = list;
+                            }
+                        }
+                    }
+                }
+            });
+            new Vue({
+                el: '#app',
+                store,
+                computed: {
+                    ...mapState({
+                        modulesLength: 'modulesLength'
+                    }),
+                    ...mapState('user', {
+                        list: state => state.list
+                    })
+                },
+                methods: {
+                    ...mapMutations({
+                        setModulesLength: function(commit, payload) {
+                            commit('setModulesLength', payload);
+                        }
+                    }),
+                    ...mapMutations('user', ['setList'])
+                },
+                created() {
+                    // console.log(this.setModulesLength);
+                    this.setModulesLength(20);
+                    this.setList([1, 2, 3, 4, 5]);
+                }
+            });
+        </script>
+    </body>
+</html>

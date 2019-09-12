@@ -49,4 +49,6 @@ ${menu
 navContent = baseContent + navContent + articleContent;
 fs.writeFileSync('./README.md', navContent);
 
-fs.writeFileSync('./' + dirName, baseContent + articleContent);
+articleContent = baseContent + articleContent;
+// articleContent = articleContent.replace(/<(\/?script>)/g, '《$1');
+fs.writeFileSync('./' + dirName, articleContent);
